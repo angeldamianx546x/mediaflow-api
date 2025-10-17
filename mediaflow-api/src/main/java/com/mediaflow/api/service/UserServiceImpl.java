@@ -95,10 +95,10 @@ public class UserServiceImpl implements UserService {
         User savedUser = repository.save(user);
 
         // 4. Crear el perfil predeterminado asociado al usuario
-        String language = (req.getPreferredLanguage() != null && !req.getPreferredLanguage().isBlank()) 
-                ? req.getPreferredLanguage() 
+        String language = (req.getPreferredLanguage() != null && !req.getPreferredLanguage().isBlank())
+                ? req.getPreferredLanguage()
                 : "es";
-                
+
         Profile profile = Profile.builder()
                 .displayName(savedUser.getName())
                 .preferredLanguage(language)
@@ -108,10 +108,10 @@ public class UserServiceImpl implements UserService {
                 .build();
 
         Profile savedProfile = profileRepository.save(profile);
-        
+
         // 5. Actualizar la referencia del perfil en el usuario
         savedUser.setProfile(savedProfile);
-        
+
         // 6. Retornar la respuesta con el perfil incluido
         return UserMapper.toResponse(savedUser);
     }
@@ -121,13 +121,33 @@ public class UserServiceImpl implements UserService {
 
         User existing = repository.findById(userId)
                 .orElseThrow(() -> new EntityNotFoundException("User not found: " + userId));
-        
+
         UserMapper.copyToEntity(req, existing);
 
         if (req.getPassword() != null && !req.getPassword().isBlank()) {
             existing.setPassword(passwordEncoder.encode(req.getPassword()));
         }
 
+        if (req.getLocation() != null) {
+            LocationRquest locReq = req.getLocation();
+
+            // Buscar si ya existe esta ubicación
+            Location location = locationRepository.findExisting(
+                    locReq.getCountry(),
+                    locReq.getRegion(),
+                    locReq.getCity(),
+                    locReq.getLat(),
+                    locReq.getLng()
+            ).orElseGet(() -> {
+                // Si no existe, crearla
+                Location newLocation = LocationMapper.toEntity(locReq);
+                return locationRepository.save(newLocation);
+            });
+
+            // Asignar la ubicación al usuario
+            existing.setLocation(location);
+        }
+        
         Set<Role> roles = new HashSet<>();
         Role defaultRole = repositoryRole.findById(1)
                 .orElseThrow(() -> new EntityNotFoundException("Default role not found"));
@@ -144,18 +164,16 @@ public class UserServiceImpl implements UserService {
         }
 
         existing.setRoles(new ArrayList<>(roles));
-        
+
         // Actualizar idioma del perfil si se proporciona
-        if (req.getPreferredLanguage() != null && !req.getPreferredLanguage().isBlank() 
+        if (req.getPreferredLanguage() != null && !req.getPreferredLanguage().isBlank()
                 && existing.getProfile() != null) {
             existing.getProfile().setPreferredLanguage(req.getPreferredLanguage());
         }
-        
+
         User saved = repository.save(existing);
         return UserMapper.toResponse(saved);
     }
-
-
 
     @Override
     public void delete(Integer userId) {
@@ -167,7 +185,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserAuth login(String email, String password) {
-         UserAuth user = repository.findByEmail(email)
+        UserAuth user = repository.findByEmail(email)
                 .orElseThrow(() -> new EntityNotFoundException("Date not correct"));
         if (!passwordEncoder.matches(password, user.getPasswordHash())) {
             throw new IllegalArgumentException("Date not correct");
