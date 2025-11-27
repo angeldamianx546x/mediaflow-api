@@ -57,4 +57,6 @@ public class ContentResponse {
     // Categorías
     @JsonProperty("categories")
     List<CategoryResponse> categories;
+    
+    List<EmotionResponse> emotions;
 }

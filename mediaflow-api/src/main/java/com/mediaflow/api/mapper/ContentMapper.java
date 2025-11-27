@@ -44,6 +44,10 @@ public final class ContentMapper {
                     .collect(Collectors.toList())
             );
         }
+        if (content.getEmotions() != null && !content.getEmotions().isEmpty()) {
+        builder.emotions(EmotionMapper.toResponseList(content.getEmotions()));
+}
+
         return builder.build();
     }
 

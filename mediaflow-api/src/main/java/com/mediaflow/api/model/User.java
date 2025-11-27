@@ -73,4 +73,7 @@ public class User {
     @ManyToMany(mappedBy = "following")
     private List<User> followers = new ArrayList<>();
 
+     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private List<PlayList> playLists = new ArrayList<>();
 }
