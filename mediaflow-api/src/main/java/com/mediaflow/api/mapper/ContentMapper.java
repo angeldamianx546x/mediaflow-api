@@ -45,8 +45,12 @@ public final class ContentMapper {
             );
         }
         if (content.getEmotions() != null && !content.getEmotions().isEmpty()) {
-        builder.emotions(EmotionMapper.toResponseList(content.getEmotions()));
-}
+            builder.emotions(
+                content.getEmotions().stream()
+                .map(EmotionMapper::toResponse)
+                .collect(Collectors.toList())
+            );
+        }   
 
         return builder.build();
     }

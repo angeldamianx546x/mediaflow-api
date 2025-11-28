@@ -106,4 +106,7 @@ public class Content {
     
     @OneToOne(mappedBy = "content", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private Metadata metadata;
+
+    @OneToOne(mappedBy = "content", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private Score score;
 }
